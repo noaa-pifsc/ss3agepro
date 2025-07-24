@@ -45,8 +45,21 @@ setup_agepro_inpfile <- function(ss_agepro,
 
   # TODO: Check if recruit_models is a single int, multile int, and valid recruit_model
   # TODO: Check bsn file path
+  data_yr_end <- max(ss_agepro$FByFleet$Yr) #endyr
+
+  unique_fleets <- ss_agepro$Fishery_SelAtAge |>
+    dplyr::filter(.data$Yr == data_yr_end ) |>
+    dplyr::distinct(dplyr::across(-c("Yr", "Fleet")), .keep_all = TRUE) |>
+    dplyr::select("Fleet") |>
+    dplyr::pull()
 
 
+  ss_agepro$Nfleets <- length(unique_fleets)
+
+
+
+  cli::cli_alert(paste0("Initializing default agepro_model with following ",
+                        "model parameters ..."))
   inp_model <- suppressWarnings(ageproR::agepro_inp_model$new(yr_start = 1,
                                              yr_end = num_years,
                                              age_begin = 1,
