@@ -71,7 +71,7 @@ setup_agepro_inpfile <- function(ss_agepro,
 
   #Roundabout way to print out projection_analyses_type
   div_keyword_header("")
-  cli::cli_alert_info(paste0("Agepro Model projection_analyses_type: ",
+  cli::cli_alert_info(paste0("projection_analyses_type: ",
                         "{.field {inp_model$projection_analyses_type}}"))
 
   # Case ID (Model Name)
@@ -80,7 +80,7 @@ setup_agepro_inpfile <- function(ss_agepro,
   # BOOTSTRAP
   suppressMessages(set_inp_model_bootstrap(inp_model, bsn_file, num_boot, 1000))
 
-  #RECRUIT
+  # RECRUIT
   suppressMessages(inp_model$set_recruit_model(recruit_models, enable_cat_print = FALSE))
   set_inp_model_recruit_prob(inp_model, recruit_model_prob)
 
@@ -90,6 +90,8 @@ setup_agepro_inpfile <- function(ss_agepro,
                                                  recruit_scaling_factor = 1000,
                                                  ssb_scaling_factor = 1,
                                                  max_recruit_obs = 100))
+  # FISHERY
+
 
 
   return(invisible(inp_model))
