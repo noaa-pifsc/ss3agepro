@@ -287,13 +287,16 @@ write_bsn_file <- function(boot_dir, bsn_outfile = "boot.bsn" , n_boot = 1){
 
   endyr <- suppressWarnings(endyr_model(boot_dir))
 
+  # set data.table parameters to bypass R CMD CHECK's "No Visible Binding" exception
+  Yr <- NULL
+
   AgeStr.List <- list()
   for(i in 1:n_boot){
 
     aBootDir    <- file.path(boot_dir,paste0("Boot",i))
     anOutput    <- r4ss::SS_output(dir=aBootDir)
     anAgeStr    <- data.table::data.table(anOutput$natage)
-    FinalAgeStr <- anAgeStr["Yr"==endyr&anAgeStr$'Beg/Mid'=="B"] |> select(-("Area":"Era"))
+    FinalAgeStr <- anAgeStr[Yr==endyr&anAgeStr$'Beg/Mid'=="B"] |> select(-("Area":"Era"))
 
     AgeStr.List <- append(AgeStr.List,list(FinalAgeStr))
   }
