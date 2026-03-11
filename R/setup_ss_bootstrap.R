@@ -120,10 +120,54 @@ ss_model_bootstrap <- function (basemodel_dir,
   start$N_bootstraps <- n_boot + 2
   r4ss::SS_writestarter(start, dir = boot_dir, overwrite = T)
 
-  r4ss::run(dir = boot_dir, exe = ss3_exe, extras = "-nohess",
-            skipfinished = FALSE, show_in_console = F)
+  #Sys.sleep(0.01)
+  #cli::cli_progress_step("Run Model")
+  #r4ss::run(dir = boot_dir, exe = ss3_exe, extras = "-nohess",
+  #          skipfinished = FALSE, show_in_console = F)
+  run_r4ss_with_spinner(boot_dir, ss3_exe)
+  #cli::cli_progress_done()
 }
 
+
+#' Run r4ss with a spinner on Rconsole
+#'
+#' Allows to display a splnner ojection on the R Console to indicate running
+#' Stock Synthesis process This is helped by running the r4ss process in \
+#' another R session.
+#'
+#' @importFrom callr r_bg
+#'
+#' @param out_dir Ouptut directory where the stock synthesis files will be saved.
+#' @template ss3_exe
+#'
+#' @keywords internal
+#'
+run_r4ss_with_spinner <- function(out_dir, ss3_exe) {
+
+  # "Background Process" to run Stock Synthesis Run
+  bg_process <- callr::r_bg(function(outdir) {
+    # runs r4ss in a seperate R session
+    r4ss::run(dir = outdir, exe = ss3_exe, extras = "-nohess",
+              skipfinished = FALSE, show_in_console = F)
+  }, args = list(outdir = out_dir))
+
+  r4ss_spinner <- cli::make_spinner(template = "Running Stock Synthesis process ... {spin} ")
+
+  while(bg_process$is_alive()){
+    r4ss_spinner$spin()
+    Sys.sleep(0.1) #Spinner Speed
+  }
+
+  r4ss_spinner$finish() #Remove spinner when ss4 process is done
+
+  #Validation
+  if(bg_process$get_exit_status() == 0) {
+    cli::cli_alert_success("Stock synthesis Run complete!")
+  }else{
+    cli::cli_alert_danger("Model run failed. Check your Report.sso or warning files.")
+  }
+
+}
 
 
 #' Create Bootstrap runs
