@@ -202,30 +202,45 @@ ss_model_n_boot <- function(basemodel_dir,
   #validate Base Model Report
   checkmate::assert_file_exists(file.path(boot_dir,"Report.sso"))
 
+  Sys.sleep(.5)
+  cli::cli_progress_step("Report Stock Syntheisis Output File exists")
+
   #Validate Base Model CompReport
   checkmate::assert_file_exists(file.path(boot_dir,"CompReport.sso"))
 
+  Sys.sleep(.5)
+  cli::cli_progress_step("Comp Report Stock Syntheisis Output File exists")
+
   #Validate Base Model covar
-  checkmate::assert_file_exists(file.path(boot_dir,"Report.sso"))
+  checkmate::assert_file_exists(file.path(boot_dir,"covar.sso"))
+
+  Sys.sleep(.5)
+  cli::cli_progress_step("Co-Variance Stock Syntheisis Output File exists")
 
   #Validate Base Model warning
-  checkmate::assert_file_exists(file.path(boot_dir,"Report.sso"))
+  checkmate::assert_file_exists(file.path(boot_dir,"warning.sso"))
+
+  Sys.sleep(.5)
+  cli::cli_progress_step("Warning Stock Syntheisis Output File exists")
 
 
   #create the bootstrap data file numbers (pad with leading 0s)
+  #Rename to string_n_boot
   boot_num <- stringr::str_pad(seq(1, n_boot, by = 1), 3, pad = "0")
 
 
 
   # Set up each bootstrap run in its own folder, to help with running SS in parallel
+  io_spinner <- cli::make_spinner(template = "Running n_boot process ... {spin} ")
   Lt <- vector("list",n_boot)
   for(i in 1:n_boot){
 
+    #TODO: Rename aBootDir to n_boot_subdir
     aBootDir <- file.path(boot_dir, paste0("Boot",i))
     dir.create(aBootDir, showWarnings = FALSE)
 
 
-    # Copy original SS files
+    # For each n_boot Copy original SS files to "abootDir"
     file.copy(
       list.files(
         basemodel_dir,
@@ -235,18 +250,23 @@ ss_model_n_boot <- function(basemodel_dir,
       to = aBootDir)
 
     # Copy the bootstrapped data files
+    # TODO: Make option to remove base caes data_boot ss files
     file.copy(file.path(boot_dir,paste0("data_boot_", boot_num[i], ".ss")),to=aBootDir)
     file.remove(file.path(boot_dir,paste0("data_boot_", boot_num[i], ".ss")))
 
     # Change Starter file to point to Bootstrap data file
+    # TOGO: Parallel THIS
     starter <- r4ss::SS_readstarter(file = file.path(basemodel_dir, "starter.ss")) # read starter file
     starter[["datfile"]] <- paste0("data_boot_", boot_num[i], ".ss")
     r4ss::SS_writestarter(starter, dir = aBootDir, overwrite = TRUE)
 
     Lt[[i]] <- append(Lt[[i]], aBootDir)
 
+    io_spinner$spin()
+    Sys.sleep(0.1) #Spinner Speed
   }
-
+  io_spinner$finish()
+  cli::cli_progress_done()
   return(Lt)
 
 }
