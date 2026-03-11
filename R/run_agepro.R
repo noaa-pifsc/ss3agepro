@@ -9,6 +9,9 @@
 #' @import parallel
 #' @import checkmate
 #' @importFrom r4ss run
+#' @importFrom future plan multisession sequential
+#' @importFrom future.apply future_lapply
+#' @import progressr
 #' @export
 #'
 #' @param ss_dirlist Filelist
@@ -30,12 +33,46 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
     checkmate::assert_directory_exists(ss_dirlist[[xdir]])
   }
 
+  #
+  progressr::handlers("cli")
 
-  NumCores <- parallel::detectCores()
-  cl       <- parallel::makeCluster(NumCores-2)
-  parallel::parLapply(cl,ss_dirlist,function(x) {
-      #Use r4ss::run to validate ss3_exe
-      r4ss::run(dir = x[[1]], exe = ss3_exe, skipfinished = FALSE)
+  #backend
+  future::plan(multisession, workers = future::availableCores()-2)
+
+
+  parallel_r4ss_run <- function(ss_dirlist) {
+
+    steps <- progressr::progressor(steps = length(ss_dirlist))
+
+    #parallel Loop
+    results_list <- future.apply::future_lapply(ss_dirlist, function(x) {
+
+      out <- r4ss::run(dir = x[[1]], exe = ss3_exe, skipfinished = FALSE)
+
+      steps(sprintf("Finished %s", basename(x[[1]] )))
+
+      return(out)
+
+    }, future.seed = TRUE)
+
+    return(results_list)
+  }
+
+  final_results <- with_progress({
+    parallel_r4ss_run(ss_dirlist)
   })
-  parallel::stopCluster(cl)
+
+  future::plan(sequential)
+
+  return(final_results)
+
+
+  # NumCores <- parallel::detectCores()
+  # cl       <- parallel::makeCluster(NumCores-2)
+  # parallel::parLapply(cl,ss_dirlist,function(x) {
+  #     #Use r4ss::run to validate ss3_exe
+  #     r4ss::run(dir = x[[1]], exe = ss3_exe, skipfinished = FALSE)
+  # })
+  #parallel::stopCluster(cl)
+
 }

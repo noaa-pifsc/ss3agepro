@@ -62,6 +62,8 @@ setup_ss_bootstrap <- function (basemodel_dir,
   #Run Model to SS Once to generate data bootstrap files
   ss_model_bootstrap(basemodel_dir, boot_dir, n_boot, ss3_exe)
 
+
+
   # Set up each bootstrap run in its own folder, to help with running SS in parallel
   Lt <- ss_model_n_boot(basemodel_dir, boot_dir, n_boot)
 
@@ -100,13 +102,15 @@ ss_model_bootstrap <- function (basemodel_dir,
   checkmate::assert_directory_exists(basemodel_dir)
   checkmate::assert_numeric(n_boot)
 
-
+  cli::cli_progress_step("Ensure Stock Synthesis binary exists")
   #Check of In Case ss3 binary exists in basemodel_dir, if not
   #ss3 binary saved to basebmodel_dir
   if(!checkmate::test_file_exists(ss3_exe)){
     get_ss3_exe(dir = basemodel_dir)
   }
 
+  Sys.sleep(.5)
+  cli::cli_progress_step("Copying basemodel Stock Syntheisis files to {boot_dir}")
   file.copy(
     list.files(
       basemodel_dir,
@@ -116,16 +120,20 @@ ss_model_bootstrap <- function (basemodel_dir,
       full.names = TRUE),
     to = boot_dir)
 
+  Sys.sleep(0.01)
+  cli::cli_progress_step("Reading {file.path(boot_dir, \"starter.ss\")}")
   start <- r4ss::SS_readstarter(file = file.path(boot_dir, "starter.ss"))
   start$N_bootstraps <- n_boot + 2
+  Sys.sleep(0.01)
+  cli::cli_progress_step("Overwrite {file.path(boot_dir, \"starter.ss\")} with (n_boot + 2) bootstraps")
   r4ss::SS_writestarter(start, dir = boot_dir, overwrite = T)
 
-  #Sys.sleep(0.01)
-  #cli::cli_progress_step("Run Model")
+  Sys.sleep(0.01)
+  cli::cli_progress_step("Run Model")
   #r4ss::run(dir = boot_dir, exe = ss3_exe, extras = "-nohess",
   #          skipfinished = FALSE, show_in_console = F)
   run_r4ss_with_spinner(boot_dir, ss3_exe)
-  #cli::cli_progress_done()
+  cli::cli_progress_done()
 }
 
 
