@@ -132,7 +132,7 @@ ss_model_bootstrap <- function (basemodel_dir,
   cli::cli_progress_step("Run Model")
   #r4ss::run(dir = boot_dir, exe = ss3_exe, extras = "-nohess",
   #          skipfinished = FALSE, show_in_console = F)
-  run_r4ss_with_spinner(boot_dir, ss3_exe)
+  run_r4ss_with_spinner(out_dir = boot_dir, ss3_exe)
   cli::cli_progress_done()
 }
 
@@ -153,11 +153,11 @@ ss_model_bootstrap <- function (basemodel_dir,
 run_r4ss_with_spinner <- function(out_dir, ss3_exe) {
 
   # "Background Process" to run Stock Synthesis Run
-  bg_process <- callr::r_bg(function(outdir) {
+  bg_process <- callr::r_bg(function(outdir, ss) {
     # runs r4ss in a seperate R session
-    r4ss::run(dir = outdir, exe = ss3_exe, extras = "-nohess",
+    r4ss::run(dir = outdir, exe = ss, extras = "-nohess",
               skipfinished = FALSE, show_in_console = F)
-  }, args = list(outdir = out_dir))
+  }, args = list(outdir = out_dir, ss = ss3_exe))
 
   r4ss_spinner <- cli::make_spinner(template = "Running Stock Synthesis process ... {spin} ")
 
