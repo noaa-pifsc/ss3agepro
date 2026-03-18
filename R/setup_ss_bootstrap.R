@@ -354,7 +354,7 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
   str_nboot <- stringr::str_pad(1:n_boot, width = 3, pad = "0")
 
   #TODO check out_dir Data boot files exist
-  out_dir_data_files <- file.path(out_dir, paste0("data_boot", str_nboot, ".ss"))
+  out_dir_data_files <- file.path(out_dir, paste0("data_boot_", str_nboot, ".ss"))
 
 
   # Setup Base Files
@@ -377,7 +377,7 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
     pstep <- progressr::progressor(steps = n_boot)
 
     # Parallelize i/o with future.lapply and return results to a list
-    Lt <- future.apply::future_lapply(seq_along(n_boot), function(i){
+    Lt <- future.apply::future_lapply(seq_len(n_boot), function(i){
 
 
       output <- tryCatch({
@@ -391,7 +391,7 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
         iboot_starter <- basedir_starter
         iboot_starter[["datfile"]] <- paste0("data_boot_", str_nboot[i], ".ss")
         r4ss::SS_writestarter(iboot_starter, dir = nboot_subdir[i],
-                              overwrite = TRUE, warn = FALSE, verbose = FALSE)
+                              overwrite = TRUE, verbose = FALSE)
 
         #If SUCCESS returns directory path
         nboot_subdir[i]
