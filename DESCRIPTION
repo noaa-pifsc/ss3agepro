@@ -20,6 +20,11 @@ Imports:
   rlang,
   reshape2,
   stringr,
+  callr,
+  future,
+  future.apply,
+  progressr,
+  parallelly,
   this.path,
   cli
 License: GPL (>= 3)

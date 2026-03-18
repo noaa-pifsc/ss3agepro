@@ -62,13 +62,17 @@ setup_ss_bootstrap <- function (basemodel_dir,
   #Run Model to SS Once to generate data bootstrap files
   ss_model_bootstrap(basemodel_dir, boot_dir, n_boot, ss3_exe)
 
-
-
   # Set up each bootstrap run in its own folder, to help with running SS in parallel
-  Lt <- ss_model_n_boot(basemodel_dir, boot_dir, n_boot)
+  #Lt <- ss_model_n_boot(basemodel_dir, boot_dir, n_boot)
+  Lt <- run_nboot_setup(basemodel_dir, boot_dir, n_boot)
+
+  Sys.sleep(.5)
+  cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ")
 
   run_parallel(Lt)
 
+  Sys.sleep(.5)
+  cli::cli_progress_step("Copying n_boot stock syntheisis output files file back to {boot_dir}")
   # Copy n_boot sso files back to bootstrap directory
   copy_sso_n_boot(boot_dir, n_boot)
 
@@ -76,9 +80,11 @@ setup_ss_bootstrap <- function (basemodel_dir,
   ## TODO: set BSN filename string parameter
   # Bootstrap Data Table written as "bootstrap.bsn" under the bootstrap directory
   bsn_file <- file.path(bootstrap_outdir,"bootstrap.bsn")
+  Sys.sleep(.5)
+  cli::cli_progress_step("Writing Bootstrap File: {bsn_file}")
   write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
 
-
+  cli::cli_progress_done()
 }
 
 #' Create SS data for bootstrap.
@@ -199,31 +205,6 @@ ss_model_n_boot <- function(basemodel_dir,
                               n_boot,
                               ss3_exe = "ss3.exe") {
 
-  #validate Base Model Report
-  checkmate::assert_file_exists(file.path(boot_dir,"Report.sso"))
-
-  Sys.sleep(.5)
-  cli::cli_progress_step("Report Stock Syntheisis Output File exists")
-
-  #Validate Base Model CompReport
-  checkmate::assert_file_exists(file.path(boot_dir,"CompReport.sso"))
-
-  Sys.sleep(.5)
-  cli::cli_progress_step("Comp Report Stock Syntheisis Output File exists")
-
-  #Validate Base Model covar
-  checkmate::assert_file_exists(file.path(boot_dir,"covar.sso"))
-
-  Sys.sleep(.5)
-  cli::cli_progress_step("Co-Variance Stock Syntheisis Output File exists")
-
-  #Validate Base Model warning
-  checkmate::assert_file_exists(file.path(boot_dir,"warning.sso"))
-
-  Sys.sleep(.5)
-  cli::cli_progress_step("Warning Stock Syntheisis Output File exists")
-
-
   #create the bootstrap data file numbers (pad with leading 0s)
   #Rename to string_n_boot
   boot_num <- stringr::str_pad(seq(1, n_boot, by = 1), 3, pad = "0")
@@ -266,11 +247,174 @@ ss_model_n_boot <- function(basemodel_dir,
     Sys.sleep(0.1) #Spinner Speed
   }
   io_spinner$finish()
-  cli::cli_progress_done()
+
   return(Lt)
 
 }
 
+#' Function Wrapper to Setup Bootstrapped runs in parallel via futures
+#'
+#' This is a function wrapper to run the function nboot_setup via future
+#'
+#' #' @returns Returns a list contain the location of the Bootstrap
+#' Subdirectories.
+#'
+#' @param basemodel_dir basemodel directory
+#' @param out_dir Target output directory
+#' @param n_boot Number of bootstraps
+#' @param ss3_exe ss3_exe
+#'
+#' @keywords Bootstrap
+#' @export
+#'
+#' @importFrom progressr handlers
+#' @importFrom future plan multisession sequential
+#' @importFrom parallelly availableCores
+#'
+run_nboot_setup <- function(basemodel_dir,
+                           out_dir,
+                           n_boot,
+                           ss3_exe = "ss3.exe") {
+
+  #Validate directories
+  checkmate::assert_directory(basemodel_dir)
+  checkmate::assert_directory(out_dir)
+
+  #validate Base Model Report
+  #checkmate::assert_file_exists(file.path(out_dir,"Report.sso"))
+
+  #Validate Base Model CompReport
+  #checkmate::assert_file_exists(file.path(out_dir,"CompReport.sso"))
+
+  #Validate Base Model covar
+  #checkmate::assert_file_exists(file.path(out_dir,"covar.sso"))
+
+  #Validate Base Model warning
+  #checkmate::assert_file_exists(file.path(out_dir,"warning.sso"))
+
+  #Setup Parallel mutisessions
+  progressr::handlers("progress")
+  future::plan(future::multisession, workers = parallelly::availableCores() - 2)
+
+  Lt <- nboot_setup(basemodel_dir, out_dir, n_boot, ss3_exe)
+
+  #Reset to default
+  future::plan(future::sequential)
+
+  # Setup bootstrap run sub directories and copy bootstrapped data
+  # to each subdirectory
+  #nboot_dir_setup(basemodel_dir, out_dir, boot_num = boot_suffix)
+
+  # Save starter with bootstrapped data
+  #Lt <- nboot_dir_starter(basemodel_dir, out_dir, boot_suffix)
+
+  return(Lt)
+}
+
+
+#' Setting up a Bootstrapping Directory with a Base Stock Synthesis Model
+#'
+#' Creates a bootstrapped model based on the base components of the Stock
+#' Synthesis Model (Control File, Starter File, Forecast File, Stock
+#' Synthesis Parameters), that is dependent to the number of bootstraps is
+#' needed.
+#'
+#' Bootstrap sub directories are created in the target out_dir. Each bootstrap
+#' subdirectory will have a copy of the basemodel Control File, Forecast File,
+#' and Stock Synthesis Parameters. Each Bootstrap run starter file will be
+#' saved as Data Boot Run File. The bootstrap Starter field  `datfile` will
+#' point to a `data_boot_<n_boot>.ss` file as the starter file; This will
+#' indicate Stock Synthesis to start at that bootstrap.
+#'
+#' @returns Returns a list contain the location of the Bootstrap
+#' Subdirectories.
+#'
+#' @param basemodel_dir basemodel directory
+#' @param out_dir Target output directory
+#' @param n_boot Number of bootstraps
+#' @param ss3_exe ss3_exe
+#'
+#' @keywords Bootstrap
+#'
+#' @importFrom checkmate assert_numeric
+#' @importFrom stringr str_pad
+#' @importFrom r4ss SS_readstarter SS_writestarter
+#' @importFrom progressr with_progress progressor
+#' @importFrom future.apply future_lapply
+#'
+nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
+
+  checkmate::assert_numeric(n_boot, lower = 1)
+
+
+  Lt <- vector("list", n_boot)
+
+  #create the bootstrap data file numbers (pad with leading 0s)
+  #Rename to str_nboot
+  str_nboot <- stringr::str_pad(1:n_boot, width = 3, pad = "0")
+
+  #TODO check out_dir Data boot files exist
+  out_dir_data_files <- file.path(out_dir, paste0("data_boot", str_nboot, ".ss"))
+
+
+  # Setup Base Files
+  basemodel_files <- list.files(
+    basemodel_dir,
+    pattern = paste0("ss.par|control.ss|forecast.ss", ss3_exe, sep="|"),
+    full.names = TRUE
+  )
+
+  # Read in base_dir Starter file
+  basedir_starter <- r4ss::SS_readstarter(file.path(basemodel_dir,"starter.ss"))
+
+  # Define Paths
+  nboot_subdir <- file.path(out_dir, paste0("Boot",1:n_boot))
+  nboot_subdir_data_files <- file.path(nboot_subdir,
+                                       paste0("data_boot_", str_nboot, ".ss"))
+
+  progressr::with_progress({
+    # Setup progressr steps
+    pstep <- progressr::progressor(steps = n_boot)
+
+    # Parallelize i/o with future.lapply and return results to a list
+    Lt <- future.apply::future_lapply(seq_along(n_boot), function(i){
+
+
+      output <- tryCatch({
+
+        #Create nboot_subdir and copy basemodel files to it
+        dir.create(nboot_subdir[i], showWarnings = FALSE)
+        file.copy(basemodel_files, to = nboot_subdir[i])
+
+        # Import starter file from basemodel_dir, save current nboot data_boot
+        # to "datfile" field, and overwrite.
+        iboot_starter <- basedir_starter
+        iboot_starter[["datfile"]] <- paste0("data_boot_", str_nboot[i], ".ss")
+        r4ss::SS_writestarter(iboot_starter, dir = nboot_subdir[i],
+                              overwrite = TRUE, warn = FALSE, verbose = FALSE)
+
+        #If SUCCESS returns directory path
+        nboot_subdir[i]
+
+      }, error = function(e) {
+        paste0("Failed on Boot ", i, ", Reason: ", e$message)
+      })
+
+      pstep() #signal Progress
+
+      return(output)
+
+    }, future.seed = TRUE, future.packages = c("r4ss"))
+
+  })
+
+  # Vectorize the move of data_boot files
+  file.rename(from = out_dir_data_files, to = nboot_subdir_data_files)
+
+  # Return list
+  return(Lt)
+
+}
 
 #' Copy Bootstrap Run Output Files to Bootstrap Directory
 #'
@@ -301,12 +445,14 @@ copy_sso_n_boot <- function(boot_dir,
   #validate target boot_dir path
   checkmate::assert_directory_exists(boot_dir)
 
+
   for(i in 1:n_boot){
 
     n_boot_dir <- file.path(boot_dir, paste0("Boot",i))
 
     #Validate Bootstrap Run directory exists
     checkmate::assert_directory_exists(n_boot_dir)
+
 
     file.copy(file.path(n_boot_dir, "Report.sso"),
               paste(boot_dir, "/Report_", i, ".sso", sep = ""),
@@ -334,8 +480,6 @@ copy_sso_n_boot <- function(boot_dir,
 
 
 }
-
-
 
 
 #' Write an Age Based Bootstrap File
