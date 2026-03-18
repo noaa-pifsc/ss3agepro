@@ -69,7 +69,7 @@ setup_ss_bootstrap <- function (basemodel_dir,
   Sys.sleep(.5)
   cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ")
 
-  run_parallel(Lt)
+  run_r4ss_parallel(Lt)
 
   Sys.sleep(.5)
   cli::cli_progress_step("Copying n_boot stock syntheisis output files file back to {boot_dir}")
