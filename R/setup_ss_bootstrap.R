@@ -66,6 +66,11 @@ setup_ss_bootstrap <- function (basemodel_dir,
   #Lt <- ss_model_n_boot(basemodel_dir, boot_dir, n_boot)
   Lt <- run_nboot_setup(basemodel_dir, boot_dir, n_boot)
 
+  #Validate Bootstrap Directory list
+  checkmate::assert_list(Lt, len = n_boot)
+  Sys.sleep(.5)
+  cli::cli_progress_step("{n_boot} Bootstrapped Subdirector{?y/ies} found ... ")
+
   Sys.sleep(.5)
   cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ")
 

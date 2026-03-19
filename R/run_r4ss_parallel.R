@@ -26,10 +26,10 @@
 run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
 
   #Validate file list is a list type
-  checkmate::assert_list(ss_dirlist)
+  checkmate::assert_list(ss_dirlist, any.missing = FALSE)
 
   #Validate "Directories" in ss_dirlist exists
-  checkmate::assert_directory_exists(ss_dirlist)
+  checkmate::assert_directory_exists(unlist(ss_dirlist))
 
   progressr::with_progress({
 
@@ -66,6 +66,10 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
 #' @export
 #'
 run_r4ss_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
+
+  #Validate "Directories" in ss_dirlist exists
+  checkmate::assert_list(ss_dirlist, any.missing = FALSE)
+  checkmate::assert_directory_exists(unlist(ss_dirlist))
 
   #backend
   progressr::handlers("cli")
