@@ -381,6 +381,8 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
     # Setup progressr steps
     pstep <- progressr::progressor(steps = n_boot)
 
+    pstep(amount = 0, message = "Starting Stock Synthesis Setup ...")
+
     # Parallelize i/o with future.lapply and return results to a list
     Lt <- future.apply::future_lapply(seq_len(n_boot), function(i){
 
@@ -409,7 +411,7 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
 
       return(output)
 
-    }, future.seed = TRUE, future.packages = c("r4ss"))
+    }, future.seed = TRUE, future.packages = c("r4ss"), future.scheduling = 1)
 
   })
 

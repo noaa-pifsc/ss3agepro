@@ -35,6 +35,9 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
 
     steps <- progressr::progressor(steps = length(ss_dirlist))
 
+    # Force Progress Bar to appear at 0% before r4ss run
+    steps(amount = 0, message = "Starting Stock Synthesis Bootstrap Runs ...")
+
     #parallel Loop
     results_list <- future.apply::future_lapply(ss_dirlist, function(x) {
 
@@ -43,7 +46,7 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
         out <- r4ss::run(dir = x, exe = ss3_exe, skipfinished = FALSE)
 
         #steps(sprintf("Finished %s", basename(x[[1]] )))
-        cli::cli_alert_success("Finished Boot %s")
+        cli::cli_alert_success("Bootstrap run at {x} SUCCESS")
 
       }, error = function(e) {
         paste0("Failed at ", x, "\n, Reason: ", e$message)
@@ -53,7 +56,10 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
 
       return(output)
 
-    }, future.seed = TRUE, future.packages = c("r4ss"))
+    },
+    future.seed = TRUE,
+    future.packages = c("r4ss"),
+    future.scheduling = 1 )
 
     return(results_list)
 
