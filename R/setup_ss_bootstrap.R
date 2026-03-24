@@ -140,11 +140,11 @@ ss_model_bootstrap <- function (basemodel_dir,
 
   Sys.sleep(0.01)
   cli::cli_progress_step("Reading {file.path(boot_dir, \"starter.ss\")}")
-  start <- r4ss::SS_readstarter(file = file.path(boot_dir, "starter.ss"))
+  start <- r4ss::SS_readstarter(file = file.path(boot_dir, "starter.ss"), verbose = FALSE)
   start$N_bootstraps <- n_boot + 2
   Sys.sleep(0.01)
   cli::cli_progress_step("Overwrite {file.path(boot_dir, \"starter.ss\")} with (n_boot + 2) bootstraps")
-  r4ss::SS_writestarter(start, dir = boot_dir, overwrite = T)
+  r4ss::SS_writestarter(start, dir = boot_dir, overwrite = TRUE, verbose = FALSE)
 
   Sys.sleep(0.01)
   cli::cli_progress_step("Run Model")
@@ -249,9 +249,9 @@ ss_model_n_boot <- function(basemodel_dir,
 
     # Change Starter file to point to Bootstrap data file
     # TOGO: Parallel THIS
-    starter <- r4ss::SS_readstarter(file = file.path(basemodel_dir, "starter.ss")) # read starter file
+    starter <- r4ss::SS_readstarter(file = file.path(basemodel_dir, "starter.ss"), verbose = FALSE) # read starter file
     starter[["datfile"]] <- paste0("data_boot_", boot_num[i], ".ss")
-    r4ss::SS_writestarter(starter, dir = aBootDir, overwrite = TRUE)
+    r4ss::SS_writestarter(starter, dir = aBootDir, overwrite = TRUE, verbose = FALSE)
 
     Lt[[i]] <- append(Lt[[i]], aBootDir)
 
