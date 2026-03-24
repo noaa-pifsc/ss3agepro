@@ -10,6 +10,7 @@
 #' @template n_boot
 #' @template basemodel_dir
 #' @template ss3_exe
+#' @template n_cores
 #'
 #' @export
 #' @import r4ss
@@ -32,7 +33,8 @@
 #' basemodel_dir <- file.path(find.package("ss3agepro"),"01_base")
 #' output_dir <- file.path(tempdir())# ,"inst","bsn_output")
 #'
-#' setup_ss_bootstrap(basemodel_dir, bootstrap_outdir = output_dir, n_boot = 10)
+#' setup_ss_bootstrap(basemodel_dir, bootstrap_outdir = output_dir,
+#' n_boot = 10, n_cores = parallelly::availableCores() - 2)
 #'
 #' }
 #'
@@ -43,6 +45,7 @@ setup_ss_bootstrap <- function (basemodel_dir,
                                 bootstrap_outdir,
                                 n_boot = 100,
                                 seed = 123,
+                                n_cores = 1,
                                 ss3_exe = "ss3") {
 
   ## TODO: Option to clean up Previous Bootstrap files.
@@ -50,6 +53,7 @@ setup_ss_bootstrap <- function (basemodel_dir,
   checkmate::assert_directory_exists(basemodel_dir)
   checkmate::assert_directory_exists(bootstrap_outdir)
   checkmate::assert_numeric(n_boot)
+  checkmate::assert_numeric(n_cores, len = 1, lower = 1, upper = parallelly::availableCores()-1)
 
   # Key directory: boot_dir
   boot_dir <- bootstrap_outdir
@@ -59,12 +63,15 @@ setup_ss_bootstrap <- function (basemodel_dir,
     set.seed(seed)
   }
 
+  #Show number of cores
+  cli::cli_alert_info("Number of processing cores (\"Future\" sessions): {n_cores} " )
+
   #Run Model to SS Once to generate data bootstrap files
   ss_model_bootstrap(basemodel_dir, boot_dir, n_boot, ss3_exe)
 
   # Set up each bootstrap run in its own folder, to help with running SS in parallel
   #Lt <- ss_model_n_boot(basemodel_dir, boot_dir, n_boot)
-  Lt <- run_nboot_setup(basemodel_dir, boot_dir, n_boot)
+  Lt <- run_nboot_setup(basemodel_dir, boot_dir, n_boot, n_cores)
 
   #Validate Bootstrap Directory list
   checkmate::assert_list(Lt, len = n_boot)
@@ -261,12 +268,14 @@ ss_model_n_boot <- function(basemodel_dir,
 #'
 #' This is a function wrapper to run the function nboot_setup via future
 #'
-#' #' @returns Returns a list contain the location of the Bootstrap
+#' @returns Returns a list contain the location of the Bootstrap
 #' Subdirectories.
+#'
+#' @template n_cores
+#' @template n_boot
 #'
 #' @param basemodel_dir basemodel directory
 #' @param out_dir Target output directory
-#' @param n_boot Number of bootstraps
 #' @param ss3_exe ss3_exe
 #'
 #' @keywords Bootstrap
@@ -279,11 +288,13 @@ ss_model_n_boot <- function(basemodel_dir,
 run_nboot_setup <- function(basemodel_dir,
                            out_dir,
                            n_boot,
+                           n_cores = 1,
                            ss3_exe = "ss3.exe") {
 
   #Validate directories
   checkmate::assert_directory(basemodel_dir)
   checkmate::assert_directory(out_dir)
+  checkmate::assert_numeric(n_cores, lower = 1, len = 1)
 
   #validate Base Model Report
   #checkmate::assert_file_exists(file.path(out_dir,"Report.sso"))
@@ -334,9 +345,10 @@ run_nboot_setup <- function(basemodel_dir,
 #' @returns Returns a list contain the location of the Bootstrap
 #' Subdirectories.
 #'
+#' @template n_boot
+#'
 #' @param basemodel_dir basemodel directory
 #' @param out_dir Target output directory
-#' @param n_boot Number of bootstraps
 #' @param ss3_exe ss3_exe
 #'
 #' @keywords Bootstrap

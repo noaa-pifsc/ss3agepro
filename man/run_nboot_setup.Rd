@@ -4,22 +4,30 @@
 \alias{run_nboot_setup}
 \title{Function Wrapper to Setup Bootstrapped runs in parallel via futures}
 \usage{
-run_nboot_setup(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe")
+run_nboot_setup(
+  basemodel_dir,
+  out_dir,
+  n_boot,
+  n_cores = 1,
+  ss3_exe = "ss3.exe"
+)
 }
 \arguments{
 \item{basemodel_dir}{basemodel directory}
 
 \item{out_dir}{Target output directory}
 
-\item{n_boot}{Number of bootstraps}
+\item{n_boot}{Number of Bootstraps}
+
+\item{n_cores}{Number of Cores to use. Defaults to 1 (sequential)}
 
 \item{ss3_exe}{ss3_exe}
 }
+\value{
+Returns a list contain the location of the Bootstrap
+Subdirectories.
+}
 \description{
 This is a function wrapper to run the function nboot_setup via future
-}
-\details{
-#' @returns Returns a list contain the location of the Bootstrap
-Subdirectories.
 }
 \keyword{Bootstrap}

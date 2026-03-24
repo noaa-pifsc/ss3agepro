@@ -11,7 +11,7 @@ nboot_setup(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe")
 
 \item{out_dir}{Target output directory}
 
-\item{n_boot}{Number of bootstraps}
+\item{n_boot}{Number of Bootstraps}
 
 \item{ss3_exe}{ss3_exe}
 }

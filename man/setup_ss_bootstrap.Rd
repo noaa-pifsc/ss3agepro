@@ -9,6 +9,7 @@ setup_ss_bootstrap(
   bootstrap_outdir,
   n_boot = 100,
   seed = 123,
+  n_cores = 1,
   ss3_exe = "ss3"
 )
 }
@@ -21,6 +22,8 @@ are located}
 \item{n_boot}{Number of Bootstraps}
 
 \item{seed}{Pusedorandom Number Seed. Default is 123}
+
+\item{n_cores}{Number of Cores to use. Defaults to 1 (sequential)}
 
 \item{ss3_exe}{Executable name. Can be just the name of the executable
 file if it is in the specified directory or in the user's PATH. Can also
@@ -39,7 +42,8 @@ Function includes helper functions to to help with running SS in parallel
 basemodel_dir <- file.path(find.package("ss3agepro"),"01_base")
 output_dir <- file.path(tempdir())# ,"inst","bsn_output")
 
-setup_ss_bootstrap(basemodel_dir, bootstrap_outdir = output_dir, n_boot = 10)
+setup_ss_bootstrap(basemodel_dir, bootstrap_outdir = output_dir,
+n_boot = 10, n_cores = parallelly::availableCores() - 2)
 
 }
 
