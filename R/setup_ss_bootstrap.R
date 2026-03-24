@@ -296,26 +296,37 @@ run_nboot_setup <- function(basemodel_dir,
   checkmate::assert_directory(out_dir)
   checkmate::assert_numeric(n_cores, lower = 1, len = 1)
 
-  #validate Base Model Report
-  #checkmate::assert_file_exists(file.path(out_dir,"Report.sso"))
+  # Capture users current environment
+  original_plan <- future::plan()
+  original_handlers <- progressr::handlers()
 
-  #Validate Base Model CompReport
-  #checkmate::assert_file_exists(file.path(out_dir,"CompReport.sso"))
-
-  #Validate Base Model covar
-  #checkmate::assert_file_exists(file.path(out_dir,"covar.sso"))
-
-  #Validate Base Model warning
-  #checkmate::assert_file_exists(file.path(out_dir,"warning.sso"))
+  # GUARNTEE restoration to user's original environment on.exit() no matter
+  # how this function ends.
+  on.exit({
+    future::plan(original_plan)
+    progressr::handlers(original_handlers)
+  }, add = TRUE)
 
   #Setup Parallel mutisessions
-  progressr::handlers("progress")
-  future::plan(future::multisession, workers = parallelly::availableCores() - 2)
+  progressr::handlers(
+    progressr::handler_cli(
+     format = "{cli::pb_spin} Setting up Bootstraps: {cli::pb_bar} {cli::pb_current}/{cli::pb_total} [{cli::pb_percent}] | ETA: {cli::pb_eta}"
+    )
+  )
+  progressr::handlers(global = TRUE)  #Global(?!) Helps Rstudio catch signals
+
+  if(n_cores > 1) {
+    future::plan(future::multisession, workers = parallelly::availableCores() - 2)
+    cli::cli_alert_info("Running in parallel across {n_cores} core{?s}.")
+  } else{
+    future::plan(future::sequential)
+    cli::cli_alert_info("Running sequentially on 1 core ...")
+  }
 
   Lt <- nboot_setup(basemodel_dir, out_dir, n_boot, ss3_exe)
 
-  #Reset to default
-  future::plan(future::sequential)
+  #Resets to default on.exit()
+
 
   # Setup bootstrap run sub directories and copy bootstrapped data
   # to each subdirectory
@@ -382,7 +393,7 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
   )
 
   # Read in base_dir Starter file
-  basedir_starter <- r4ss::SS_readstarter(file.path(basemodel_dir,"starter.ss"))
+  basedir_starter <- r4ss::SS_readstarter(file.path(basemodel_dir,"starter.ss"), verbose = FALSE)
 
   # Define Paths
   nboot_subdir <- file.path(out_dir, paste0("Boot",1:n_boot))
@@ -407,10 +418,17 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
 
         # Import starter file from basemodel_dir, save current nboot data_boot
         # to "datfile" field, and overwrite.
-        iboot_starter <- basedir_starter
-        iboot_starter[["datfile"]] <- paste0("data_boot_", str_nboot[i], ".ss")
-        r4ss::SS_writestarter(iboot_starter, dir = nboot_subdir[i],
-                              overwrite = TRUE, verbose = FALSE)
+        # Suppress r4ss workers from breaking cli in RStudio
+        utils::capture.output({
+          suppressMessages(suppressWarnings({
+            iboot_starter <- basedir_starter
+            iboot_starter[["datfile"]] <- paste0("data_boot_", str_nboot[i], ".ss")
+            r4ss::SS_writestarter(iboot_starter, dir = nboot_subdir[i],
+                                  overwrite = TRUE, verbose = FALSE)
+          }))
+        })
+
+
 
         #If SUCCESS returns directory path
         nboot_subdir[i]
@@ -423,7 +441,11 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
 
       return(output)
 
-    }, future.seed = TRUE, future.packages = c("r4ss"), future.scheduling = 1)
+    },
+    future.seed = TRUE,
+    future.packages = c("r4ss"),
+    future.chunk.size = 1,
+    future.conditions = character(0)) ## <-- Stopgap from future from relaying worker messages! (Sounds Like a hackoff)
 
   })
 
@@ -580,4 +602,5 @@ endyr_model <- function (boot_dir) {
 
   return(endyr)
 }
+
 
