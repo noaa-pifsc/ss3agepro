@@ -7,12 +7,14 @@
 \usage{
 run_parallel(ss_dirlist, ss3_exe = "ss3.exe")
 
-run_r4ss_parallel(ss_dirlist, ss3_exe = "ss3.exe")
+run_r4ss_parallel(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe")
 }
 \arguments{
 \item{ss_dirlist}{Filelist}
 
 \item{ss3_exe}{ss3_exe}
+
+\item{n_cores}{Number of Cores to use. Defaults to 1 (sequential)}
 }
 \description{
 Runs instances of Stock Synthesis in Parallel via \code{r4ss::run} for each
