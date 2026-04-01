@@ -161,8 +161,6 @@ ss_model_bootstrap <- function (basemodel_dir,
 
   Sys.sleep(0.01)
   cli::cli_progress_step("Run Model")
-  #r4ss::run(dir = boot_dir, exe = ss3_exe, extras = "-nohess",
-  #          skipfinished = FALSE, show_in_console = F)
   run_r4ss_with_spinner(out_dir = boot_dir, ss3_exe)
   cli::cli_progress_done()
 }
@@ -337,16 +335,6 @@ run_nboot_setup <- function(basemodel_dir,
   }
 
   Lt <- nboot_setup(basemodel_dir, out_dir, n_boot, ss3_exe)
-
-  #Resets to default on.exit()
-
-
-  # Setup bootstrap run sub directories and copy bootstrapped data
-  # to each subdirectory
-  #nboot_dir_setup(basemodel_dir, out_dir, boot_num = boot_suffix)
-
-  # Save starter with bootstrapped data
-  #Lt <- nboot_dir_starter(basemodel_dir, out_dir, boot_suffix)
 
   return(Lt)
 }
