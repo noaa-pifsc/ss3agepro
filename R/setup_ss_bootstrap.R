@@ -107,9 +107,11 @@ setup_ss_bootstrap <- function (basemodel_dir,
   bsn_file <- file.path(bootstrap_outdir,"bootstrap.bsn")
   Sys.sleep(.5)
   cli::cli_progress_step("Writing Bootstrap File: {bsn_file}")
-  write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
-
+  suppress_r4ss_messages({
+    write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
+  })
   cli::cli_progress_done()
+
 }
 
 #' Create SS data for bootstrap.
@@ -549,10 +551,11 @@ write_bsn_file <- function(boot_dir, bsn_outfile = "boot.bsn" , n_boot = 1){
   Yr <- NULL
 
   AgeStr.List <- list()
+
   for(i in 1:n_boot){
 
     aBootDir    <- file.path(boot_dir,paste0("Boot",i))
-    anOutput    <- r4ss::SS_output(dir=aBootDir)
+    anOutput    <- r4ss::SS_output(dir=aBootDir, printstats = FALSE, verbose = FALSE)
     anAgeStr    <- data.table::data.table(anOutput$natage)
     FinalAgeStr <- anAgeStr[Yr==endyr&anAgeStr$'Beg/Mid'=="B"] |> select(-("Area":"Era"))
 
