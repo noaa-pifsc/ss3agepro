@@ -75,16 +75,18 @@ setup_ss_bootstrap <- function (basemodel_dir,
 
   #Validate Bootstrap Directory list
   checkmate::assert_list(Lt, len = n_boot)
-  Sys.sleep(.5)
-  cli::cli_progress_step("{n_boot} Bootstrapped Subdirector{?y/ies} found ... ")
+  cli::cli_alert_info("{n_boot} Bootstrapped Subdirector{?y/ies} found ... ")
 
-  Sys.sleep(.5)
+  Sys.sleep(0.5)
   cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ")
+  Sys.sleep(0.5)
 
   # Run each bootstrap subdirectory to Stock Synthesis Parallelly.
   results <- run_r4ss_parallel(Lt, n_cores)
 
   # Print out results after Parallel Run is done
+  cli::cli_text("")
+
   for(nboot_result in results) {
     if(grepl("Failed", nboot_result)) {
       cli::cli_alert_danger("{nboot_result}")
@@ -95,17 +97,16 @@ setup_ss_bootstrap <- function (basemodel_dir,
 
   message("\nOUTPUT BOOTSTRAP FILES\n")
   # Copy n_boot sso files back to bootstrap directory
-  suppress_r4ss_messages({
-    copy_sso_n_boot(boot_dir, n_boot)
-  })
+  suppressMessages(copy_sso_n_boot(boot_dir, n_boot))
 
-  Sys.sleep(.5)
+
+  Sys.sleep(0.5)
   cli::cli_progress_step("Copied Stock syntheisis output files from {n_boot} Bootstrap{?s} file back to {boot_dir}")
 
   ## TODO: set BSN filename string parameter
   # Bootstrap Data Table written as "bootstrap.bsn" under the bootstrap directory
   bsn_file <- file.path(bootstrap_outdir,"bootstrap.bsn")
-  Sys.sleep(.5)
+  Sys.sleep(0.5)
   cli::cli_progress_step("Writing Bootstrap File: {bsn_file}")
   suppress_r4ss_messages({
     write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
