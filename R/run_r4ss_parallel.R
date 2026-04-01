@@ -44,7 +44,7 @@ run_parallel <- function(ss_dirlist, ss3_exe = "ss3.exe") {
       output <- tryCatch({
         #out <- r4ss::run(dir = x[[1]], exe = ss3_exe, skipfinished = FALSE)
         suppress_r4ss_messages({
-          out <- r4ss::run(dir = x, exe = ss3_exe, skipfinished = FALSE, show_in_console = FALSE)
+          out <- r4ss::run(dir = x, exe = ss3_exe, extras = "-nohess", skipfinished = FALSE, show_in_console = FALSE)
         })
 
         x
