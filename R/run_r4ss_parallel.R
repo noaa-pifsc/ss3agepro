@@ -82,14 +82,14 @@ run_r4ss_parallel <- function(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe") {
   checkmate::assert_numeric(n_cores, len = 1, lower = 1, upper = parallelly::availableCores()-1)
 
   # Capture original user enivroment
-  original_plan <- future::plan()
-  original_handlers <- progressr::handlers()
+  # original_plan <- future::plan()
+  # original_handlers <- progressr::handlers()
 
   # RESET user core environment after exiting this function.
-  on.exit({
-    future::plan(original_plan)
-    progressr::handlers(original_handlers)
-  }, add = TRUE)
+  # on.exit({
+  #   future::plan(original_plan)
+  #   progressr::handlers(original_handlers)
+  # }, add = TRUE)
 
   #backend
   progressr::handlers(
@@ -108,8 +108,12 @@ run_r4ss_parallel <- function(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe") {
     cli::cli_alert_info("Running {length(ss_dirlist)} subdirector{?y/ies} on Stock Synthesis sequentially on 1 core ...")
   }
 
+  out <- run_parallel(ss_dirlist, ss3_exe)
 
-  return(run_parallel(ss_dirlist, ss3_exe))
+  #Revert to sequential processing
+  future::plan(future::sequential)
+
+  return(out)
 
 }
 
