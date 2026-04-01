@@ -119,13 +119,13 @@ run_r4ss_parallel <- function(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe") {
 #' Helper Function to suppress the verbose messages the "chatty" r4ss during
 #' the run_parallel function.
 #'
-#' @param x Function Call
+#' @param exp Function Call
 #'
-suppress_r4ss_messages <- function(x) {
+suppress_r4ss_messages <- function(exp) {
   utils::capture.output(
     utils::capture.output(
       suppressMessages(suppressWarnings(
-        outres <- x
+        outres <- exp
       )),
       type = "message"
     ),

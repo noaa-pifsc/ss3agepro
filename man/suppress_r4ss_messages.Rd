@@ -4,10 +4,10 @@
 \alias{suppress_r4ss_messages}
 \title{Suppress r4ss verbose messages}
 \usage{
-suppress_r4ss_messages(x)
+suppress_r4ss_messages(exp)
 }
 \arguments{
-\item{x}{Function Call}
+\item{exp}{Function Call}
 }
 \description{
 Helper Function to suppress the verbose messages the "chatty" r4ss during
