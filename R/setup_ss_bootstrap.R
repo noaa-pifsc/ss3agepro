@@ -77,17 +77,26 @@ setup_ss_bootstrap <- function (basemodel_dir,
   checkmate::assert_list(Lt, len = n_boot)
   cli::cli_alert_info("{n_boot} Bootstrapped Subdirector{?y/ies} found ... ")
 
-  step_ssboot <- cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ",
-                         msg_done = "Parallelize runs of Bootstrapped Models through Stock Syntheisis Done. ")
-  Sys.sleep(1)
-  cli::cli_process_done(id = step_ssboot)
+  ssboot_time_begin <- Sys.time()
 
   # Run each bootstrap subdirectory to Stock Synthesis Parallelly.
   results <- run_r4ss_parallel(Lt, n_cores)
 
-  # Print out results after Parallel Run is done
+  ssboot_time_end <- Sys.time()
+
+  # Calculate runtime used to run each bootstrap subdirectory through
+  # Stock Synthesis Parallely
+  time_duration <- round(difftime(ssboot_time_end, ssboot_time_begin,
+                                  units ="mins"), 2)
+
+  # Newline buffer to prevent "progressr" overwriting message buffer
   cli::cli_text("")
 
+  # Status Messages to show runtime durationused to Parallelize runs of
+  # Bootstrapped Models
+  cli::cli_alert_info("Parallelize runs of Bootstrapped Models Done. [{time_duration}m]")
+
+  # Print out results after Parallel Run is done
   for(nboot_result in results) {
     if(grepl("Failed", nboot_result)) {
       cli::cli_alert_danger("{nboot_result}")
