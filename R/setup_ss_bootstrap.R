@@ -77,9 +77,10 @@ setup_ss_bootstrap <- function (basemodel_dir,
   checkmate::assert_list(Lt, len = n_boot)
   cli::cli_alert_info("{n_boot} Bootstrapped Subdirector{?y/ies} found ... ")
 
-  Sys.sleep(0.5)
-  cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ")
-  Sys.sleep(0.5)
+  step_ssboot <- cli::cli_progress_step("Parallelize runs of Bootstrapped Models through Stock Syntheisis ... ",
+                         msg_done = "Parallelize runs of Bootstrapped Models through Stock Syntheisis Done. ")
+  Sys.sleep(1)
+  cli::cli_process_done(id = step_ssboot)
 
   # Run each bootstrap subdirectory to Stock Synthesis Parallelly.
   results <- run_r4ss_parallel(Lt, n_cores)
@@ -107,11 +108,12 @@ setup_ss_bootstrap <- function (basemodel_dir,
   # Bootstrap Data Table written as "bootstrap.bsn" under the bootstrap directory
   bsn_file <- file.path(bootstrap_outdir,"bootstrap.bsn")
   Sys.sleep(0.5)
-  cli::cli_progress_step("Writing Bootstrap File: {bsn_file}")
-  suppress_r4ss_messages({
+  cli::cli_progress_step("Writing Bootstrap File: {bsn_file}", msg_done = "Bootstrap File Written to {bsn_file}")
+  #suppress_r4ss_messages({
     write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
-  })
+  #})
   cli::cli_progress_done()
+  cli::cli_alert_success("Done")
 
 }
 
@@ -569,8 +571,6 @@ write_bsn_file <- function(boot_dir, bsn_outfile = "boot.bsn" , n_boot = 1){
               file = bsn_outfile,
               row.names=F, col.names=F)
 
-  message(paste0("Bootstrap Table Written to ", bsn_outfile))
-
 }
 
 #' Extracts end year of model
@@ -592,7 +592,7 @@ write_bsn_file <- function(boot_dir, bsn_outfile = "boot.bsn" , n_boot = 1){
 #'
 endyr_model <- function (boot_dir) {
 
-  base.model <- r4ss::SS_output(boot_dir)
+  base.model <- r4ss::SS_output(boot_dir, printstats = FALSE, verbose = FALSE)
 
   drvquants <-
     base.model$derived_quants %>%
