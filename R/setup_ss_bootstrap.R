@@ -86,15 +86,10 @@ setup_ss_bootstrap <- function (basemodel_dir,
 
   # Calculate runtime used to run each bootstrap subdirectory through
   # Stock Synthesis Parallely
-  time_duration <- round(difftime(ssboot_time_end, ssboot_time_begin,
-                                  units ="mins"), 2)
+  time_duration <- format_duration_string(start = ssboot_time_begin, end = ssboot_time_end)
 
   # Newline buffer to prevent "progressr" overwriting message buffer
   cli::cli_text("")
-
-  # Status Messages to show runtime durationused to Parallelize runs of
-  # Bootstrapped Models
-  cli::cli_alert_info("Parallelize runs of Bootstrapped Models Done. [{time_duration}m]")
 
   # Print out results after Parallel Run is done
   for(nboot_result in results) {
@@ -104,6 +99,10 @@ setup_ss_bootstrap <- function (basemodel_dir,
       cli::cli_alert_success("{nboot_result} processed ... ")
     }
   }
+
+  # Status Messages to show runtime durationused to Parallelize runs of
+  # Bootstrapped Models
+  cli::cli_alert_info("Parallelize runs of Bootstrapped Models Done. [{.strong {time_duration}}]")
 
   message("\nOUTPUT BOOTSTRAP FILES\n")
   # Copy n_boot sso files back to bootstrap directory
@@ -471,6 +470,50 @@ nboot_setup <- function(basemodel_dir, out_dir, n_boot, ss3_exe = "ss3.exe") {
   return(Lt)
 
 }
+
+
+#' Formatted time duration string between two time periods
+#'
+#' Helper function that returns the time difference of two POSIXct values
+#' formatted as `%dh %dm %.1fs`.
+#'
+#' @param start POSIXct value indicating the "start time". Value must be less
+#' than end or "end time."
+#' @param end POSIX value indicating "end time". Value must be greater than
+#' start or "start time"
+#'
+#' @keywords internal
+#'
+format_duration_string <- function(start, end){
+
+  #Validation
+  checkmate::assert_posixct(start, len = 1, upper = end)
+  checkmate::assert_posixct(end, len = 1, lower = start)
+
+  #Total difftime is secs
+  total_secs <- as.numeric(difftime(end, start, units = "secs"))
+
+  # Setup Difftimes in Hrs, Mins, and Secs
+  diff_hrs <- floor(total_secs / 3600)
+  diff_mins <- floor((total_secs %% 3600) / 60)
+  diff_secs <- total_secs %% 60
+
+  # Return formatted time duration string depending on duration
+  if (diff_hrs > 0) {
+    return(sprintf("%dh %dm %.1fs", diff_hrs, diff_mins, diff_secs))
+  }
+
+  if (total_secs < 60){
+    return(sprintf("%.1fs", diff_secs))
+  }
+
+  #Otherwise
+  return(sprintf("%dm %.1fs", diff_mins, diff_secs))
+
+
+}
+
+
 
 #' Copy Bootstrap Run Output Files to Bootstrap Directory
 #'
