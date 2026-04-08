@@ -109,9 +109,9 @@ setup_ss_bootstrap <- function (basemodel_dir,
   bsn_file <- file.path(bootstrap_outdir,"bootstrap.bsn")
   Sys.sleep(0.5)
   cli::cli_progress_step("Writing Bootstrap File: {bsn_file}", msg_done = "Bootstrap File Written to {bsn_file}")
-  #suppress_r4ss_messages({
-    write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
-  #})
+
+  write_bsn_file(bootstrap_outdir, bsn_file, n_boot)
+
   cli::cli_progress_done()
   cli::cli_alert_success("Done")
 

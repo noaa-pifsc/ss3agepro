@@ -110,9 +110,6 @@ run_r4ss_parallel <- function(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe") {
 
   out <- run_parallel(ss_dirlist, ss3_exe)
 
-  #Revert to sequential processing
-  #future::plan(future::sequential)
-
   return(out)
 
 }
