@@ -102,7 +102,9 @@ setup_ss_bootstrap <- function (basemodel_dir,
 
   # Status Messages to show runtime durationused to Parallelize runs of
   # Bootstrapped Models
-  cli::cli_alert_info("Parallelize runs of Bootstrapped Models Done. [{.strong {time_duration}}]")
+  cli::cli_div(theme = list(span.strong = list(color ="grey")))
+  cli::cli_alert_info("Parallelize runs of Bootstrapped Models Done. {.strong [{time_duration}]}")
+  cli::cli_end()
 
   message("\nOUTPUT BOOTSTRAP FILES\n")
   # Copy n_boot sso files back to bootstrap directory
