@@ -94,7 +94,7 @@ run_r4ss_parallel <- function(ss_dirlist, n_cores = 1, ss3_exe = "ss3.exe") {
   #backend
   progressr::handlers(
     progressr::handler_cli(
-      format = "Running Models (This nay take awhile) : {cli::pb_bar} {cli::pb_current}/{cli::pb_total} [{cli::pb_percent}] | ETA: {cli::pb_eta}"
+      format = "Running Models (This may take awhile) : {cli::pb_bar} {cli::pb_current}/{cli::pb_total} [{cli::pb_percent}] | ETA: {cli::pb_eta}"
     )
   )
   progressr::handlers(global = TRUE)
